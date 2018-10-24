@@ -7,10 +7,10 @@
 # 功能     ： Python框架
 
 import os,sys,time,re,logging
-import threading,queue,apscheduler,schedule
+import threading,queue,apscheduler#,schedule
 import csv, configobj,json
 #import pyodbc,pymysql,pymssql,cx_Oracle,sqlite3,DBUtils,_mssql
-import serial,modbus_tk,OpenOPC
+#import serial,modbus_tk,OpenOPC
 from log import Logger
 from ReadConfig import Config
 from ToTime import ToTime

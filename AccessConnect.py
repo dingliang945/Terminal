@@ -6,7 +6,7 @@
 # 软件版本 : Python3.5.4
 # 功能     ：
 
-import pyodbc,os,re
+import pyodbc,os,re,win32process,win32event,time,win32gui
 from queue import Queue
 class PoolConnect(object):
     """docstring for Connect"""
@@ -17,6 +17,7 @@ class PoolConnect(object):
         super(PoolConnect, self).__init__()
         self.arg = arg
         self.log=log
+        self.setupDeviceDsn()
         self.maxConn=self.getMaxConn()
         self.createConn()
     #初始队列
@@ -43,6 +44,22 @@ class PoolConnect(object):
              self.createConn()
         else:
             del conn
+    #安装access2010 ODBC 驱动
+    def setupDeviceDsn(self):
+        dbPath=self.arg['database']
+        exp=re.findall('\.(\w+)',os.path.split(dbPath)[1])[0]
+        userinfo='Dbq=%s;Pwd=%s;'%(dbPath,self.arg['password'])
+        if exp.lower()=='accdb':
+            if 'Microsoft Access Driver (*.mdb, *.accdb)' not in [x for x in pyodbc.drivers() if x.startswith('Microsoft Access Driver')]:
+                self.log('本机没有安装ACCESS2010以上数据库驱动，即将安装驱动',30)
+                path=os.path.abspath('./setup/access2010/AccessDatabaseEngine.exe')
+                self.log("后台安装Access2010 ODBC驱动程序，请稍候。。。",20)
+                os.system(path+' /quiet')
+                while 'Microsoft Access Driver (*.mdb, *.accdb)' not in [x for x in pyodbc.drivers() if x.startswith('Microsoft Access Driver')]:
+                        self.log("正在安装。。。",20)
+                        time.sleep(5)
+                else:
+                    self.log("安装Access2010 ODBC驱动成功",20)
     #创建连接
     def create(self):
         dbPath=self.arg['database']
@@ -52,11 +69,10 @@ class PoolConnect(object):
             if 'Microsoft Access Driver (*.mdb, *.accdb)'in [x for x in pyodbc.drivers() if x.startswith('Microsoft Access Driver')]:
                 return pyodbc.connect('Driver={Microsoft Access Driver (*.mdb, *.accdb)};'+userinfo)
             else:
-                self.setupAccessDriver()
+                self.log("No DSN")
         else:
             return pyodbc.connect('Driver={Microsoft Access Driver (*.mdb)};'+userinfo)
-    def setupAccessDriver(self):
-        pass
+
 
     def loadSqlDict(self,sql):
         try:
@@ -144,8 +160,25 @@ class Connect(object):
         super(Connect, self).__init__()
         self.arg = arg
         self.log=log
+        self.setupDeviceDsn()
         self.conn=self.connect()
         self.conn.close()
+    #安装access2010 ODBC 驱动
+    def setupDeviceDsn(self):
+        dbPath=self.arg['database']
+        exp=re.findall('\.(\w+)',os.path.split(dbPath)[1])[0]
+        userinfo='Dbq=%s;Pwd=%s;'%(dbPath,self.arg['password'])
+        if exp.lower()=='accdb':
+            if 'Microsoft Access Driver (*.mdb, *.accdb)' not in [x for x in pyodbc.drivers() if x.startswith('Microsoft Access Driver')]:
+                self.log('本机没有安装ACCESS2010以上数据库驱动，即将安装驱动',30)
+                path=os.path.abspath('./setup/access2010/AccessDatabaseEngine.exe')
+                self.log("后台安装Access2010 ODBC驱动程序，请稍候。。。",20)
+                os.system(path+' /quiet')
+                while 'Microsoft Access Driver (*.mdb, *.accdb)' not in [x for x in pyodbc.drivers() if x.startswith('Microsoft Access Driver')]:
+                        self.log("正在安装。。。",20)
+                        time.sleep(5)
+                else:
+                    self.log("安装Access2010 ODBC驱动成功",20)
     def connect(self):
         dbPath=self.arg['database']
         exp=re.findall('\.(\w+)',os.path.split(dbPath)[1])[0]
